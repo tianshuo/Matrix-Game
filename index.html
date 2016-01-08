@@ -77,10 +77,13 @@
         <br />
         <a href="javascript:;" @click="restartGame()">Rematch!</a>
       </div>
+      <div class="col-xs-5" v-show="!gameOver">
+        <a href="javascript:;" @click="getAI()">HINT</a>
+      </div>
     </div>
         <div class="row">
         <div class="board">
-                <div v-for="(index, num) in board" track-by="$index" class="col-xs-4 tile-holder" @click="put(index)">
+                <div v-for="(index, num) in board" track-by="$index" class="tile-holder" v-bind:class="[(board.length==4)?'col-xs-6':'',(board.length==9)?'col-xs-4':'',(board.length==16)?'col-xs-3':'']" @click="put(index)">
           {{ num==null?"?":num }}
         </div>
         </div>
@@ -92,7 +95,7 @@
         </div>
         <hr />
         <b>How to Play:</b> Select a number tile, selected the place on the grid you want to place this tile, the score of Player 1 is the product-sum of all rows, the score of Player 2 is the product-sum of all columns. The Player with the highest score wins!
-        {{game|json}}
+        <!-- {{game|json}} -->
     </div>
     <script src="alphabeta.js"></script>
     <script src="game.js"></script>

@@ -1,12 +1,13 @@
 Vue.config.debug = true;  // Enable Vue Debug mode
 var console=console||({ //IE Proof
-  log:function(){}
+  log:function(){},
+  assert:function(){}
 });
 
 var MatrixGame=function(options){
   this.board=options.board;
   this.pieces=options.pieces;
-  if(this.board.length!=9||this.pieces.length<9) throw TypeError("Wrong Arguments for game");
+  if([4,9,16].indexOf(this.board.length)<0||this.pieces.length<this.board.length) throw TypeError("Wrong Arguments for game");
 }
 
 MatrixGame.prototype.legalMoves= function(){
@@ -16,6 +17,20 @@ MatrixGame.prototype.legalMoves= function(){
       }
       return accu;
   },[]);
+};
+
+MatrixGame.prototype.remaining=function(){
+  var self=this;
+  return self.pieces.filter(function(num){
+      return self.board.indexOf(num)<0;
+  });
+};
+
+MatrixGame.prototype.toString=function(){
+  throw "error";
+  console.log("%d %d %d",this.board[0],this.board[1],this.board[2]);
+  console.log("%d %d %d",this.board[3],this.board[4],this.board[5]);
+  console.log("%d %d %d",this.board[6],this.board[7],this.board[8]);
 };
 
 MatrixGame.prototype.gameOver=function(){
@@ -32,9 +47,12 @@ MatrixGame.prototype.presentMove=function(){
 };
 
 MatrixGame.prototype.restartGame=function(){
-  this.board=this.board.map(function(){
-    return null;
-  });
+  // this.board=this.board.map(function(){
+  //   return null;
+  // });
+  for(var i=0;i<this.board.length;i++){
+    this.board.$set(i,null);
+  }
 };
 
 // Function to calculate products on array
@@ -50,11 +68,24 @@ var _prod=function(posArr,mainArray){
 };
 
 MatrixGame.prototype.playerOneScoreDetails=function(){
-  return [
-    _prod([0,1,2],this.board),
-    _prod([3,4,5],this.board),
-    _prod([6,7,8],this.board)
-  ];
+  switch(this.board.length){
+    case 4:return [
+      _prod([0,1],this.board),
+      _prod([2,3],this.board)
+    ];break;
+    case 9:return [
+      _prod([0,1,2],this.board),
+      _prod([3,4,5],this.board),
+      _prod([6,7,8],this.board)
+    ];break;
+    case 16:return [
+      _prod([0,1,2,3],this.board),
+      _prod([4,5,6,7],this.board),
+      _prod([8,9,10,11],this.board),
+      _prod([12,13,14,15],this.board)
+    ];break;
+  }
+  throw "error";
 };
 
 MatrixGame.prototype.playerOneScore=function(){
@@ -65,11 +96,23 @@ MatrixGame.prototype.playerOneScore=function(){
 };
 
 MatrixGame.prototype.playerTwoScoreDetails=function(){
-  return [
-    _prod([0,3,6],this.board),
-    _prod([1,4,7],this.board),
-    _prod([2,5,8],this.board)
-  ];
+  switch(this.board.length){
+    case 4:return [
+      _prod([0,2],this.board),
+      _prod([1,3],this.board)
+    ];break;
+    case 9:return [
+      _prod([0,3,6],this.board),
+      _prod([1,4,7],this.board),
+      _prod([2,5,8],this.board)
+    ];break;
+    case 16:return [
+      _prod([0,4,8,12],this.board),
+      _prod([1,5,9,13],this.board),
+      _prod([2,6,10,14],this.board),
+      _prod([3,7,11,15],this.board)
+    ];break;
+  }
 };
 
 MatrixGame.prototype.playerTwoScore=function(){
@@ -79,18 +122,19 @@ MatrixGame.prototype.playerTwoScore=function(){
   },0);
 };
 
-MatrixGame.prototype.placeMove=function(num,pos){
+MatrixGame.prototype.placeMove=function(num,pos,vue){
   if(this.pieces.indexOf(num)<0){
     throw TypeError("Wrong Number");
   }
   if(MatrixGame.prototype.legalMoves.call(this).indexOf(pos)<0){
     throw TypeError("Wrong Position");
   }
-  if(this.board.$set){ // For Vue refresh
+  if(vue){ // For Vue refresh
     this.board.$set(pos,num);
   }else{
     this.board[pos]=num;
   }
+  return this;
 };
 
 // Creates New Game
@@ -98,6 +142,11 @@ var NewGame=new MatrixGame({
   pieces:[1,2,3,4,5,6,7,8,9],
   board:[null,null,null,null,null,null,null,null,null]
 });
+
+// var NewGame=new MatrixGame({
+//   pieces:[1,2,3,4],
+//   board:[null,null,null,null]
+// });
 
 var game=new Vue({
     el: ".container",
@@ -108,12 +157,7 @@ var game=new Vue({
         selected:null
     },
     computed: {
-        remaining: function () {
-            var self=this;
-            return self.pieces.filter(function(num){
-                return self.board.indexOf(num)<0;
-            });
-        },
+        remaining:NewGame.remaining,
         gameOver:NewGame.gameOver,
         presentMove:NewGame.presentMove,
         playerOneScore:NewGame.playerOneScore,
@@ -124,7 +168,7 @@ var game=new Vue({
     methods: {
         put:function(pos){
             try{
-              this.game.placeMove(this.selected,pos);
+              this.game.placeMove(this.selected,pos,true);
               this.selected=null;
             }catch(e){
               console.log(e);
@@ -135,7 +179,13 @@ var game=new Vue({
                 this.selected=num;
             }
         },
-        restartGame:NewGame.restartGame
+        restartGame:NewGame.restartGame.bind(NewGame),
+        getAI:function(){
+            var v=AlphaBeta(this.game,10,-Infinity,Infinity,this.game.presentMove,true);
+            console.log(v);
+            this.game.placeMove(v[1][0],v[1][1],true);
+
+        }
     }
 
 });
