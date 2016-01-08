@@ -52,7 +52,7 @@
             background:#337ab7!important;
         }
         .used{
-            color:#E0D5C9;    
+            color:#E0D5C9;
             cursor:default;
         }
         .tile-holder{
@@ -65,74 +65,37 @@
 
 <body>
     <div class="container" v-bind:class="presentMove==1?'playerOne':'playerTwo'">
-        <span class="label" v-bind:class="presentMove==1?'label-danger':'label-default'">Player 1</span> {{ product([0,1,2])}}+{{ product([3,4,5])}}+{{ product([6,7,8])}}={{ product([0,1,2])+ product([3,4,5])+ product([6,7,8])}}<br />
-        <span class="label" v-bind:class="presentMove==1?'label-default':'label-primary'">Player 2</span> {{ product([0,3,6])}}+{{ product([1,4,7])}}+{{ product([2,5,8])}}={{ product([0,3,6])+ product([1,4,7])+ product([2,5,8])}}
+      <div class="row">
+        <div class="col-xs-7">
+        <span class="label" v-bind:class="presentMove==1?'label-danger':'label-default'">Player 1</span> {{ playerOneScoreDetails.join("+")}}={{playerOneScore}}<br />
+        <span class="label" v-bind:class="presentMove==1?'label-default':'label-primary'">Player 2</span>  {{ playerTwoScoreDetails.join("+")}}={{playerTwoScore}}
+      </div>
+      <div class="col-xs-5" v-show="gameOver">
+        <span v-show="playerOneScore>playerTwoScore">Player 1 Wins!</span>
+        <span v-show="playerOneScore<playerTwoScore">Player 2 Wins!</span>
+        <span v-show="playerOneScore==playerTwoScore">Tie!</span>
+        <br />
+        <a href="javascript:;" @click="restartGame()">Rematch!</a>
+      </div>
+    </div>
         <div class="row">
         <div class="board">
                 <div v-for="(index, num) in board" track-by="$index" class="col-xs-4 tile-holder" @click="put(index)">
           {{ num==null?"?":num }}
-        </div>  
+        </div>
         </div>
             </div>
         <div class="row pieces" >
             <span v-for="(index, num) in pieces"  track-by="$index" v-bind:class="[remaining.indexOf(num)<0?'used':'', (selected==num ? 'selected' : '')]" @click="select(num)">
           {{ num==null?"x":num }}
-        </span>  
+        </span>
         </div>
         <hr />
         <b>How to Play:</b> Select a number tile, selected the place on the grid you want to place this tile, the score of Player 1 is the product-sum of all rows, the score of Player 2 is the product-sum of all columns. The Player with the highest score wins!
-        
+        {{game|json}}
     </div>
-
-    <script>
-        new Vue({
-            el: ".container",
-            data: {
-                pieces:[1,2,3,4,5,6,7,8,9],
-                board:[null,null,null,null,null,null,null,null,null],
-                selected:null,
-                presentMove:1
-            },
-            computed: {
-                remaining: function () {
-                    var self=this;
-                    return self.pieces.filter(function(num){
-                        return self.board.indexOf(num)<0;
-                    });
-                }
-            },
-            methods: {
-                put:function(num){
-                    if(this.selected&&!this.board[num]){
-                        this.board.$set(num,this.selected);
-                        this.selected=null;
-                        this.presentMove=3-this.presentMove;
-                    }
-                },
-                select:function(num){
-                    if(this.remaining.indexOf(num)>=0){
-                        this.selected=num;
-                    }
-                },
-                product:function(posArr){
-                    var self=this,
-                        arr=posArr.map(function(i){
-                        return self.board[i];
-                    });
-                    console.log(arr);
-                    return arr.reduce(function(accu,iter){
-                        console.log(accu,iter);
-                        if(iter){
-                            return accu?accu*iter:iter;
-                        }else{
-                            return accu;
-                        }
-                    },0);
-                }
-            }
-               
-        });
-    </script>
+    <script src="alphabeta.js"></script>
+    <script src="game.js"></script>
 </body>
 
 </html>
